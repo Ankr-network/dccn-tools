@@ -1,4 +1,4 @@
-package log
+package logger
 
 import (
 	"context"
@@ -61,7 +61,7 @@ func (h *handler) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
 }
 
 func NewLogger() Logger {
-	l, err := cfg.Build()
+	l, err := cfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		panic(err)
 	}
