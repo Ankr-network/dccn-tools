@@ -1,7 +1,7 @@
-github.com/Ankr-network/dccn-tools/metadata v0.0.0-20191027054730-5db8fb72c73d h1:5JTC9EoYvoDxPP68+7hd/CLb/MlH4P4l8bLjZ8QbgWk=
-github.com/Ankr-network/dccn-tools/metadata v0.0.0-20191027054730-5db8fb72c73d/go.mod h1:8iu8rBsI8Rb8DmEEpSPmUF46u+l+dfqv4BXhipiLvRY=
-github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
-github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
+github.com/Ankr-network/dccn-tools/metadata v0.0.0-20191027062156-2ad41838d32d h1:/AoFN9izL3p7x+9rYHU4MdvDmSHxeS8UpD4OXCEQ42w=
+github.com/Ankr-network/dccn-tools/metadata v0.0.0-20191027062156-2ad41838d32d/go.mod h1:8iu8rBsI8Rb8DmEEpSPmUF46u+l+dfqv4BXhipiLvRY=
+github.com/Ankr-network/dccn-tools/snowflake v0.0.0-20191028025236-21494b002958 h1:ZXU9H992vL9WFloZuK2N7S8SrjjO/Z2DNWqr4PLJj2c=
+github.com/Ankr-network/dccn-tools/snowflake v0.0.0-20191028025236-21494b002958/go.mod h1:lioAqUDAI3yJwj95STcnuKs+eo0r/x4BUe+6zFabAgo=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
