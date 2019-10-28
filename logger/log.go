@@ -2,10 +2,12 @@ package logger
 
 import (
 	"context"
+	"time"
+
 	"github.com/Ankr-network/dccn-tools/metadata"
+	"github.com/Ankr-network/dccn-tools/snowflake"
 	"go.uber.org/zap"
 )
-
 
 type Logger interface {
 	Debug(ctx context.Context, msg string, fields ...zap.Field)
@@ -13,16 +15,23 @@ type Logger interface {
 	Warn(ctx context.Context, msg string, fields ...zap.Field)
 	Error(ctx context.Context, msg string, fields ...zap.Field)
 	Fatal(ctx context.Context, msg string, fields ...zap.Field)
+	Generate() snowflake.ID
 }
 
 const (
 	TraceID      = "traceID"
 	ParentSpanID = "parentSpanID"
 	SpanID       = "spanID"
+	startTime    = 1448587470 // the world begin time
 )
 
 type handler struct {
 	logger *zap.Logger
+	node   *snowflake.Node
+}
+
+func (h *handler) Generate() snowflake.ID {
+	return h.node.Generate()
 }
 
 func (h *handler) Debug(ctx context.Context, msg string, fields ...zap.Field) {
@@ -65,13 +74,18 @@ func NewLogger() Logger {
 	if err != nil {
 		panic(err)
 	}
+	n, err := snowflake.NewNode((time.Now().Unix() - startTime) % 1024)
+	if err != nil {
+		panic(err)
+	}
 	return &handler{
 		logger: l,
+		node:   n,
 	}
 }
 
 func appendFields(md metadata.Metadata, fields ...zap.Field) []zap.Field {
-	fields = append(fields,zap.String(TraceID, md[TraceID]))
+	fields = append(fields, zap.String(TraceID, md[TraceID]))
 	fields = append(fields, zap.String(ParentSpanID, md[ParentSpanID]))
 	fields = append(fields, zap.String(SpanID, md[SpanID]))
 	return fields
