@@ -59,7 +59,7 @@ const (
 	codePkgPath     = "google.golang.org/grpc/codes"
 	statusPkgPath   = "google.golang.org/grpc/status"
 	logPkgPath      = "github.com/Ankr-network/dccn-tools/logger"
-	metadataPkgPath = "github.com/Ankr-network/dccn-tools/metadata"
+	metadataPkgPath = "google.golang.org/grpc/metadata"
 )
 
 func init() {
@@ -483,11 +483,22 @@ func (g *grpc) generateServerMethod(servName, fullServName string, method *pb.Me
 		g.P("func ", hname, "(srv interface{}, ctx ", contextPkg, ".Context, dec func(interface{}) error, interceptor ", grpcPkg, ".UnaryServerInterceptor) (interface{}, error) {")
 		g.P("in := new(", inType, ")")
 		g.P("if err := dec(in); err != nil { return nil, err }")
-		g.P("if md, ok := metadata.FromContext(ctx); ok {")
-		g.P("      md[logger.ParentSpanID] = md[logger.SpanID]")
-		g.P("      md[logger.SpanID] = l.Generate().String()")
-		g.P("     ctx = metadata.NewContext(ctx, md)")
-		g.P("}")
+		g.P("//if exist trace id then set new span id, else set the entire id values")
+		g.P("m := make(map[string]string)")
+		g.P("if md, ok := metadata.FromIncomingContext(ctx); ok {")
+		g.P("    if vs := md.Get(logger.TraceID); len(vs) > 0 {")
+		g.P("         m[logger.TraceID] = vs[len(vs)-1]")
+		g.P("     }else{")
+		g.P("         m[logger.TraceID] = l.Generate().String()")
+		g.P("     }")
+		g.P("     if vs := md.Get(logger.SpanID); len(vs) > 0 {")
+		g.P("          m[logger.ParentSpanID] = vs[len(vs)-1]")
+		g.P("     }else{")
+		g.P("          m[logger.ParentSpanID] = l.Generate().String()")
+		g.P("     }")
+		g.P("} ")
+		g.P("m[logger.SpanID] = l.Generate().String()")
+		g.P("ctx = metadata.NewIncomingContext(ctx, metadata.New(m))")
 		g.P("if interceptor == nil { ")
 		g.P(" // output request")
 		g.P(" reqBody, err := json.Marshal(&in)")
