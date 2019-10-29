@@ -2,12 +2,13 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
-	"github.com/Ankr-network/dccn-tools/metadata"
 	"github.com/Ankr-network/dccn-tools/snowflake"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 type Logger interface {
@@ -42,35 +43,50 @@ func (h *handler) Flush() error {
 }
 
 func (h *handler) Debug(ctx context.Context, msg string, fields ...zap.Field) {
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fields = appendFields(md, fields...)
+		h.logger.Debug(msg, fields...)
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		fields = appendFields(md, fields...)
 		h.logger.Debug(msg, fields...)
 	}
 }
 
 func (h *handler) Info(ctx context.Context, msg string, fields ...zap.Field) {
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fields = appendFields(md, fields...)
+		h.logger.Info(msg, fields...)
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		fields = appendFields(md, fields...)
 		h.logger.Info(msg, fields...)
 	}
 }
 
 func (h *handler) Warn(ctx context.Context, msg string, fields ...zap.Field) {
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fields = appendFields(md, fields...)
+		h.logger.Warn(msg, fields...)
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		fields = appendFields(md, fields...)
 		h.logger.Warn(msg, fields...)
 	}
 }
 
 func (h *handler) Error(ctx context.Context, msg string, fields ...zap.Field) {
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fields = appendFields(md, fields...)
+		h.logger.Error(msg, fields...)
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		fields = appendFields(md, fields...)
 		h.logger.Error(msg, fields...)
 	}
 }
 
 func (h *handler) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fields = appendFields(md, fields...)
+		h.logger.Fatal(msg, fields...)
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		fields = appendFields(md, fields...)
 		h.logger.Fatal(msg, fields...)
 	}
@@ -91,10 +107,18 @@ func NewLogger() Logger {
 	}
 }
 
-func appendFields(md metadata.Metadata, fields ...zap.Field) []zap.Field {
-	fields = append(fields, zap.String(TraceID, md[TraceID]))
-	fields = append(fields, zap.String(ParentSpanID, md[ParentSpanID]))
-	fields = append(fields, zap.String(SpanID, md[SpanID]))
+func appendFields(md metadata.MD, fields ...zap.Field) []zap.Field {
+	if vs := md.Get(TraceID); len(vs) > 0 {
+		fields = append(fields, zap.String(TraceID, vs[len(vs)-1]))
+	} else {
+		fmt.Println("no trace id")
+	}
+	if vs := md.Get(ParentSpanID); len(vs) > 0 {
+		fields = append(fields, zap.String(ParentSpanID, vs[len(vs)-1]))
+	}
+	if vs := md.Get(SpanID); len(vs) > 0 {
+		fields = append(fields, zap.String(SpanID, vs[len(vs)-1]))
+	}
 	hostName, _ := os.Hostname()
 	fields = append(fields, zap.String(HostName, hostName))
 	return fields
