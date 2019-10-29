@@ -47,15 +47,19 @@ import (
 // It is incremented whenever an incompatibility between the generated code and
 // the grpc package is introduced; the generated code references
 // a constant, grpc.SupportPackageIsVersionN (where N is generatedCodeVersion).
-const generatedCodeVersion = 4
+const generatedCodeVersion = 5
 
 // Paths for packages used by code generated in this file,
 // relative to the import_prefix of the generator.Generator.
 const (
-	contextPkgPath = "context"
-	grpcPkgPath    = "google.golang.org/grpc"
-	codePkgPath    = "google.golang.org/grpc/codes"
-	statusPkgPath  = "google.golang.org/grpc/status"
+	contextPkgPath  = "context"
+	jsonPkgPath     = "encoding/json"
+	zapPkgPath      = "go.uber.org/zap"
+	grpcPkgPath     = "google.golang.org/grpc"
+	codePkgPath     = "google.golang.org/grpc/codes"
+	statusPkgPath   = "google.golang.org/grpc/status"
+	logPkgPath      = "github.com/Ankr-network/dccn-tools/logger"
+	metadataPkgPath = "github.com/Ankr-network/dccn-tools/metadata"
 )
 
 func init() {
@@ -68,7 +72,7 @@ type grpc struct {
 	gen *generator.Generator
 }
 
-// Name returns the name of this plugin, "grpc".
+// Name returns the name of this plugin, "ankr".
 func (g *grpc) Name() string {
 	return "ankr"
 }
@@ -79,6 +83,7 @@ func (g *grpc) Name() string {
 var (
 	contextPkg string
 	grpcPkg    string
+	logPkg     string
 )
 
 // Init initializes the plugin.
@@ -109,10 +114,15 @@ func (g *grpc) Generate(file *generator.FileDescriptor) {
 
 	contextPkg = string(g.gen.AddImport(contextPkgPath))
 	grpcPkg = string(g.gen.AddImport(grpcPkgPath))
+	logPkg = string(g.gen.AddImport(logPkgPath))
+	g.gen.AddImport(metadataPkgPath)
+	g.gen.AddImport(jsonPkgPath)
+	g.gen.AddImport(zapPkgPath)
 
 	g.P("// Reference imports to suppress errors if they are not otherwise used.")
 	g.P("var _ ", contextPkg, ".Context")
 	g.P("var _ ", grpcPkg, ".ClientConn")
+	g.P("var l =", logPkg, ".NewLogger()") // for log output
 	g.P()
 
 	// Assert version compatibility.
@@ -128,6 +138,7 @@ func (g *grpc) Generate(file *generator.FileDescriptor) {
 
 // GenerateImports generates the import declaration for this file.
 func (g *grpc) GenerateImports(file *generator.FileDescriptor) {
+	// nothing to do
 }
 
 // reservedClientName records whether a client name is reserved on the client side.
@@ -467,11 +478,34 @@ func (g *grpc) generateServerMethod(servName, fullServName string, method *pb.Me
 	inType := g.typeName(method.GetInputType())
 	outType := g.typeName(method.GetOutputType())
 
+	// custom code generator, add request and response output
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P("func ", hname, "(srv interface{}, ctx ", contextPkg, ".Context, dec func(interface{}) error, interceptor ", grpcPkg, ".UnaryServerInterceptor) (interface{}, error) {")
 		g.P("in := new(", inType, ")")
 		g.P("if err := dec(in); err != nil { return nil, err }")
-		g.P("if interceptor == nil { return srv.(", servName, "Server).", methName, "(ctx, in) }")
+		g.P("if md, ok := metadata.FromContext(ctx); ok {")
+		g.P("      md[logger.ParentSpanID] = md[logger.SpanID]")
+		g.P("      md[logger.SpanID] = l.Generate().String()")
+		g.P("     ctx = metadata.NewContext(ctx, md)")
+		g.P("}")
+		g.P("if interceptor == nil { ")
+		g.P(" // output request")
+		g.P(" reqBody, err := json.Marshal(&in)")
+		g.P(" if err != nil {")
+		g.P(`     l.Error(ctx, "request", zap.String("body", err.Error()))`)
+		g.P(" } else {")
+		g.P(` l.Info(ctx, "request", zap.String("body", string(reqBody)))`)
+		g.P(" }")
+		g.P(" rsp, err := srv.(", servName, "Server).", methName, "(ctx, in) ")
+		g.P(" // output response")
+		g.P(" rspBody, err := json.Marshal(&rsp)")
+		g.P(" if err != nil {")
+		g.P(`     l.Error(ctx, "response", zap.String("body", err.Error()))`)
+		g.P(" } else {")
+		g.P(`     l.Info(ctx, "response", zap.String("body", string(rspBody)))`)
+		g.P(" }")
+		g.P(" return rsp, err ")
+		g.P("}")
 		g.P("info := &", grpcPkg, ".UnaryServerInfo{")
 		g.P("Server: srv,")
 		g.P("FullMethod: ", strconv.Quote(fmt.Sprintf("/%s/%s", fullServName, methName)), ",")

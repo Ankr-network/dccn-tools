@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/Ankr-network/dccn-tools/metadata"
@@ -15,6 +16,7 @@ type Logger interface {
 	Warn(ctx context.Context, msg string, fields ...zap.Field)
 	Error(ctx context.Context, msg string, fields ...zap.Field)
 	Fatal(ctx context.Context, msg string, fields ...zap.Field)
+	Flush() error
 	Generate() snowflake.ID
 }
 
@@ -22,6 +24,7 @@ const (
 	TraceID      = "traceID"
 	ParentSpanID = "parentSpanID"
 	SpanID       = "spanID"
+	HostName     = "HostName"
 	startTime    = 1448587470 // the world begin time
 )
 
@@ -32,6 +35,10 @@ type handler struct {
 
 func (h *handler) Generate() snowflake.ID {
 	return h.node.Generate()
+}
+
+func (h *handler) Flush() error {
+	return h.logger.Sync()
 }
 
 func (h *handler) Debug(ctx context.Context, msg string, fields ...zap.Field) {
@@ -88,5 +95,7 @@ func appendFields(md metadata.Metadata, fields ...zap.Field) []zap.Field {
 	fields = append(fields, zap.String(TraceID, md[TraceID]))
 	fields = append(fields, zap.String(ParentSpanID, md[ParentSpanID]))
 	fields = append(fields, zap.String(SpanID, md[SpanID]))
+	hostName, _ := os.Hostname()
+	fields = append(fields, zap.String(HostName, hostName))
 	return fields
 }
