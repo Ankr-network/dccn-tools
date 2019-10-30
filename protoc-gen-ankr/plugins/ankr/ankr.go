@@ -54,12 +54,12 @@ const generatedCodeVersion = 5
 const (
 	contextPkgPath  = "context"
 	jsonPkgPath     = "encoding/json"
-	zapPkgPath      = "go.uber.org/zap"
 	grpcPkgPath     = "google.golang.org/grpc"
 	codePkgPath     = "google.golang.org/grpc/codes"
 	statusPkgPath   = "google.golang.org/grpc/status"
+	zapPkgPath      = "github.com/Ankr-network/dccn-tools/zap"
 	logPkgPath      = "github.com/Ankr-network/dccn-tools/logger"
-	metadataPkgPath = "google.golang.org/grpc/metadata"
+	metadataPkgPath = "github.com/Ankr-network/dccn-tools/metadata"
 )
 
 func init() {
@@ -150,7 +150,9 @@ func unexport(s string) string { return strings.ToLower(s[:1]) + s[1:] }
 
 // deprecationComment is the standard comment added to deprecated
 // messages, fields, enums, and enum values.
-var deprecationComment = "// Deprecated: Do not use."
+var (
+	deprecationComment = "// Deprecated: Do not use."
+)
 
 // generateService generates all the code for the named service.
 func (g *grpc) generateService(file *generator.FileDescriptor, service *pb.ServiceDescriptorProto, index int) {
@@ -183,6 +185,7 @@ func (g *grpc) generateService(file *generator.FileDescriptor, service *pb.Servi
 		}
 		g.P(g.generateClientSignature(servName, method))
 	}
+	g.P(" Close() error")
 	g.P("}")
 	g.P()
 
@@ -196,13 +199,31 @@ func (g *grpc) generateService(file *generator.FileDescriptor, service *pb.Servi
 	if deprecated {
 		g.P(deprecationComment)
 	}
+	g.P(" // origin client method")
 	g.P("func New", servName, "Client (cc *", grpcPkg, ".ClientConn) ", servName, "Client {")
 	g.P("return &", unexport(servName), "Client{cc}")
 	g.P("}")
 	g.P()
 
+	g.P(" // new client method")
+	g.P("func NewAnkr", servName, "Client (addr string) (", servName, "Client, error) {")
+	g.P("c, err := grpc.Dial(addr, grpc.WithInsecure())")
+	g.P(" if err!=nil {")
+	g.P("   return nil, err")
+	g.P("}")
+	g.P("return &", unexport(servName), "Client{c}, nil")
+	g.P("}")
+	g.P()
+
+	g.P(" // new client close method")
+	g.P("func (c *", unexport(servName), "Client) Close()  error {")
+	g.P("   return c.cc.Close()")
+	g.P("}")
+	g.P()
+
 	var methodIndex, streamIndex int
 	serviceDescVar := "_" + servName + "_serviceDesc"
+
 	// Client method implementations.
 	for _, method := range service.Method {
 		var descExpr string

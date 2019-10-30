@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Ankr-network/dccn-tools/metadata"
 	"github.com/Ankr-network/dccn-tools/zap"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestHandler_Info(t *testing.T) {

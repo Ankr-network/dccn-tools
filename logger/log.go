@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/Ankr-network/dccn-tools/metadata"
 	"github.com/Ankr-network/dccn-tools/snowflake"
 	"github.com/Ankr-network/dccn-tools/zap"
-	"google.golang.org/grpc/metadata"
 )
 
 type Logger interface {

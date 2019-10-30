@@ -9,8 +9,8 @@ import (
 	fmt "fmt"
 	logger "github.com/Ankr-network/dccn-tools/logger"
 	metadata "github.com/Ankr-network/dccn-tools/metadata"
+	zap "github.com/Ankr-network/dccn-tools/zap"
 	proto "github.com/golang/protobuf/proto"
-	zap "go.uber.org/zap"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -141,14 +141,30 @@ const _ = grpc.SupportPackageIsVersion5
 type GreeterClient interface {
 	Hello(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 	World(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	Close() error
 }
 
 type greeterClient struct {
 	cc *grpc.ClientConn
 }
 
+// origin client method
 func NewGreeterClient(cc *grpc.ClientConn) GreeterClient {
 	return &greeterClient{cc}
+}
+
+// new client method
+func NewAnkrGreeterClient(addr string) (GreeterClient, error) {
+	c, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	return &greeterClient{c}, nil
+}
+
+// new client close method
+func (c *greeterClient) Close() error {
+	return c.cc.Close()
 }
 
 func (c *greeterClient) Hello(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
@@ -195,26 +211,37 @@ func _Greeter_Hello_Handler(srv interface{}, ctx context.Context, dec func(inter
 	if err := dec(in); err != nil {
 		return nil, err
 	}
-	if md, ok := metadata.FromContext(ctx); ok {
-		md[logger.ParentSpanID] = md[logger.SpanID]
-		md[logger.SpanID] = l.Generate().String()
-		ctx = metadata.NewContext(ctx, md)
+	//if exist trace id then set new span id, else set the entire id values
+	m := make(map[string]string)
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vs := md.Get(logger.TraceID); len(vs) > 0 {
+			m[logger.TraceID] = vs[len(vs)-1]
+		} else {
+			m[logger.TraceID] = l.Generate().String()
+		}
+		if vs := md.Get(logger.SpanID); len(vs) > 0 {
+			m[logger.ParentSpanID] = vs[len(vs)-1]
+		} else {
+			m[logger.ParentSpanID] = l.Generate().String()
+		}
 	}
+	m[logger.SpanID] = l.Generate().String()
+	ctx = metadata.NewIncomingContext(ctx, metadata.New(m))
 	if interceptor == nil {
 		// output request
 		reqBody, err := json.Marshal(&in)
 		if err != nil {
-			l.Error(ctx, "request", zap.String("body", err.Error()))
+			l.Error(ctx, err.Error(), zap.String("type", "request"))
 		} else {
-			l.Info(ctx, "request", zap.String("body", string(reqBody)))
+			l.Info(ctx, string(reqBody), zap.String("type", "request"))
 		}
 		rsp, err := srv.(GreeterServer).Hello(ctx, in)
 		// output response
 		rspBody, err := json.Marshal(&rsp)
 		if err != nil {
-			l.Error(ctx, "response", zap.String("body", err.Error()))
+			l.Error(ctx, err.Error(), zap.String("type", "response"))
 		} else {
-			l.Info(ctx, "response", zap.String("body", string(rspBody)))
+			l.Info(ctx, string(rspBody), zap.String("type", "response"))
 		}
 		return rsp, err
 	}
@@ -233,26 +260,37 @@ func _Greeter_World_Handler(srv interface{}, ctx context.Context, dec func(inter
 	if err := dec(in); err != nil {
 		return nil, err
 	}
-	if md, ok := metadata.FromContext(ctx); ok {
-		md[logger.ParentSpanID] = md[logger.SpanID]
-		md[logger.SpanID] = l.Generate().String()
-		ctx = metadata.NewContext(ctx, md)
+	//if exist trace id then set new span id, else set the entire id values
+	m := make(map[string]string)
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vs := md.Get(logger.TraceID); len(vs) > 0 {
+			m[logger.TraceID] = vs[len(vs)-1]
+		} else {
+			m[logger.TraceID] = l.Generate().String()
+		}
+		if vs := md.Get(logger.SpanID); len(vs) > 0 {
+			m[logger.ParentSpanID] = vs[len(vs)-1]
+		} else {
+			m[logger.ParentSpanID] = l.Generate().String()
+		}
 	}
+	m[logger.SpanID] = l.Generate().String()
+	ctx = metadata.NewIncomingContext(ctx, metadata.New(m))
 	if interceptor == nil {
 		// output request
 		reqBody, err := json.Marshal(&in)
 		if err != nil {
-			l.Error(ctx, "request", zap.String("body", err.Error()))
+			l.Error(ctx, err.Error(), zap.String("type", "request"))
 		} else {
-			l.Info(ctx, "request", zap.String("body", string(reqBody)))
+			l.Info(ctx, string(reqBody), zap.String("type", "request"))
 		}
 		rsp, err := srv.(GreeterServer).World(ctx, in)
 		// output response
 		rspBody, err := json.Marshal(&rsp)
 		if err != nil {
-			l.Error(ctx, "response", zap.String("body", err.Error()))
+			l.Error(ctx, err.Error(), zap.String("type", "response"))
 		} else {
-			l.Info(ctx, "response", zap.String("body", string(rspBody)))
+			l.Info(ctx, string(rspBody), zap.String("type", "response"))
 		}
 		return rsp, err
 	}
