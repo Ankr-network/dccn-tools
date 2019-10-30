@@ -1,5 +1,5 @@
 package logger
 
-import "go.uber.org/zap"
+import "github.com/Ankr-network/zap"
 
 var cfg = zap.NewProductionConfig()
