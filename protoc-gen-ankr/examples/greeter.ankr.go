@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 	logger "github.com/Ankr-network/dccn-tools/logger"
-	metadata "github.com/Ankr-network/dccn-tools/metadata"
 	zap "github.com/Ankr-network/dccn-tools/zap"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
+	metadata "google.golang.org/grpc/metadata"
 	status "google.golang.org/grpc/status"
 	math "math"
 )

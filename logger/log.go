@@ -19,6 +19,7 @@ type Logger interface {
 	Fatal(ctx context.Context, msg string, fields ...zap.Field)
 	Flush() error
 	Generate() snowflake.ID
+	PackContext(ctx context.Context) context.Context
 }
 
 const (
@@ -32,6 +33,22 @@ const (
 type handler struct {
 	logger *zap.Logger
 	node   *snowflake.Node
+}
+
+func (h *handler) PackContext(ctx context.Context) context.Context {
+	m := make(map[string]string)
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if vs := md.Get(TraceID); len(vs) > 0 {
+			m[TraceID] = vs[len(vs)-1]
+		}
+		if vs := md.Get(ParentSpanID); len(vs) > 0 {
+			m[ParentSpanID] = vs[len(vs)-1]
+		}
+		if vs := md.Get(SpanID); len(vs) > 0 {
+			m[SpanID] = vs[len(vs)-1]
+		}
+	}
+	return metadata.NewOutgoingContext(ctx, metadata.New(m))
 }
 
 func (h *handler) Generate() snowflake.ID {
