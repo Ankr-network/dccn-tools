@@ -59,7 +59,7 @@ const (
 	statusPkgPath   = "google.golang.org/grpc/status"
 	zapPkgPath      = "github.com/Ankr-network/dccn-tools/zap"
 	logPkgPath      = "github.com/Ankr-network/dccn-tools/logger"
-	metadataPkgPath = "github.com/Ankr-network/dccn-tools/metadata"
+	metadataPkgPath = "google.golang.org/grpc/metadata"
 )
 
 func init() {
