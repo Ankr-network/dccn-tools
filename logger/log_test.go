@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"go.uber.org/zap"
+	"github.com/Ankr-network/dccn-tools/zap"
 	"google.golang.org/grpc/metadata"
 )
 

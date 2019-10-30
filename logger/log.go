@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Ankr-network/dccn-tools/snowflake"
-	"go.uber.org/zap"
+	"github.com/Ankr-network/dccn-tools/zap"
 	"google.golang.org/grpc/metadata"
 )
 

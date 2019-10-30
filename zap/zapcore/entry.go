@@ -22,13 +22,14 @@ package zapcore
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Ankr-network/dccn-tools/zap"
 	"github.com/Ankr-network/dccn-tools/zap/internal/bufferpool"
 	"github.com/Ankr-network/dccn-tools/zap/internal/exit"
-
 	"go.uber.org/multierr"
 )
 
@@ -197,6 +198,9 @@ func (ce *CheckedEntry) Write(fields ...Field) {
 	if ce == nil {
 		return
 	}
+
+	// add func name
+	fields = append(fields, zap.String("funcName", runtime.FuncForPC(ce.Entry.Caller.PC).Name()))
 
 	if ce.dirty {
 		if ce.ErrorOutput != nil {
