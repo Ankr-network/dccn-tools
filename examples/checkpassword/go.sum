@@ -1,5 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Ankr-network/dccn-tools v1.0.4 h1:Yxc3MReN4Kh8NtcOu0sc+t7ZRgdq+Dlf1HDkRauzdIU=
+github.com/Ankr-network/dccn-tools/examples/public v0.0.0-20191031061612-841fefee0292 h1:l5JR2RWDjVTiEdK+hyLycC/KNVuSgo5IKGwejyt9H6k=
+github.com/Ankr-network/dccn-tools/examples/public v0.0.0-20191031061612-841fefee0292/go.mod h1:Mbgt8HROUUdBllkbCJA4CBJOvaHqcEZQe7padgQXNY8=
 github.com/Ankr-network/dccn-tools/logger v0.0.0-20191030102435-b088744b3ce3 h1:YaU33hQSjqDUSl25iggLF6pL9inoezj6n0a3MPU9H6Y=
 github.com/Ankr-network/dccn-tools/logger v0.0.0-20191030102435-b088744b3ce3/go.mod h1:UoAH1fu0JO2e6gTfA9kQL4uFSvtgyCHCCsOcnPArTz4=
 github.com/Ankr-network/dccn-tools/metadata v0.0.0-20191030075027-f0f83464b233/go.mod h1:8iu8rBsI8Rb8DmEEpSPmUF46u+l+dfqv4BXhipiLvRY=
