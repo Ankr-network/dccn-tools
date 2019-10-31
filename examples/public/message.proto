@@ -1,0 +1,7 @@
+syntax = "proto3";
+package pulibc.message;
+
+message RspCodeMsg{
+    string code = 1;
+    string msg  = 2;
+}
