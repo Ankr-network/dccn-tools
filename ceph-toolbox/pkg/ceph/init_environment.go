@@ -30,32 +30,36 @@ var (
 	DbMinSizeMB int = 1024 * 1024 * 1024 * MB
 )
 
-func InitEnv(cmd *cobra.Command) {
+func InitEnv(cmd *cobra.Command) error {
 	config, err := cmd.Flags().GetString("kubeconfig")
 	if err != nil {
 		glog.Error(err)
-		return
+		return err
 	}
 	priKey, err := cmd.Flags().GetString("privateKey")
 	if err != nil {
 		glog.Error(err)
-		return
+		return err
 	}
 	name, err := cmd.Flags().GetString("user")
 	if err != nil {
 		glog.Error(err)
-		return
+		return err
 	}
 	password, err := cmd.Flags().GetString("password")
 	if err != nil {
 		glog.Error(err)
-		return
+		return err
 	}
 
 	// initialize directory name
 	DirName = fmt.Sprintf("%x", md5.Sum([]byte(time.Now().Format(time.RFC3339))))
 
 	ns := GetNodeInfo(config)
+	if err := checkEnvCondition(ns); err != nil {
+		glog.Error(err)
+		return err
+	}
 	for _, v := range ns {
 		if priKey != "" {
 			name = v.Name
@@ -63,14 +67,28 @@ func InitEnv(cmd *cobra.Command) {
 		c, err := ssh.Dial(v.Addr, name, priKey, password)
 		if err != nil {
 			glog.Error(err)
-			return
+			return err
 		}
 		if err = makeValidDirectory(c, DirName); err != nil {
 			glog.Error(err)
-			return
+			return err
 		}
 	}
+	return nil
+}
 
+func checkEnvCondition(ns []*NodeInfo) error {
+	// output env info
+	for _, v := range ns {
+		glog.V(2).Infof("ip: %s node: %s user: %s cpu: %d mem: %d \n",
+			v.Addr, v.Name, v.User, v.CPU, v.Mem)
+		if v.CPU < CpuMinimum || v.Mem < MemMinimum {
+			glog.V(10).Infof("basic condition, minimum cpu cores: %d memory size: %d \n",
+				CpuMinimum, MemMinimum)
+			return errors.New("kubernetes cluster environment condition can't satisfy with ceph cluster")
+		}
+	}
+	return nil
 }
 
 func makeValidDirectory(c *ssh.Client, dirName string) error {

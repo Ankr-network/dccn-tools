@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"flag"
+	goflag "flag"
 	"fmt"
 	"os"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
-
-var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -45,17 +44,7 @@ func Execute() {
 }
 
 func init() {
-
-	if err := flag.Set("alsologtostderr", "true"); err != nil {
-		glog.Errorf("set command line flag failed: %v \n", err)
-		return
-	}
-	if err := flag.Set("stderrthreshold", "INFO"); err != nil {
-		glog.Errorf("set command line flag failed: %v \n", err)
-		return
-	}
-
-	flag.Parse()
+	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 
 	// initialize global flags
 	rootCmd.PersistentFlags().StringP("kubeconfig", "c", "/root/.kube/config",

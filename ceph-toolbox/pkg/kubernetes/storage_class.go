@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"time"
+
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	v1 "k8s.io/api/storage/v1"
@@ -36,6 +38,44 @@ func buildStorageClass(config, body string) error {
 		if _, err = storageClient.StorageClasses().Create(&storageClass); err != nil {
 			glog.Error(err)
 			return err
+		}
+	}
+
+	return nil
+}
+
+func DelStorageClassHandler(config, body string) error {
+	cfg, err := clientcmd.BuildConfigFromFlags("", config)
+	if err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	storageClient, err := storagev1.NewForConfig(cfg)
+	if err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	storageClass := v1.StorageClass{}
+	if err := yaml.Unmarshal([]byte(body), &storageClass); err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	if _, err = storageClient.StorageClasses().Get(storageClass.Name, metav1.GetOptions{}); err == nil {
+		if err = storageClient.StorageClasses().Delete(storageClass.Name, &metav1.DeleteOptions{}); err != nil {
+			glog.Error(err)
+			return err
+		}
+	}
+	// wait the component end
+	for {
+		if _, err = storageClient.StorageClasses().Get(storageClass.Name, metav1.GetOptions{}); err == nil {
+			time.Sleep(time.Second)
+			continue
+		} else {
+			break
 		}
 	}
 

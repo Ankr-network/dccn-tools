@@ -13,13 +13,17 @@ import (
 )
 
 const (
-	Master = "node-role.kubernetes.io/master"
+	Master           = "node-role.kubernetes.io/master"
+	CpuMinimum int64 = 4
+	MemMinimum int64 = 7000 * KB
 )
 
 type NodeInfo struct {
 	Name string
 	Addr string
 	User string
+	CPU  int64
+	Mem  int64 // Ki
 }
 
 // GetNodeInfo  get all work node info except master
@@ -57,6 +61,8 @@ func GetNodeInfo(kconfig string) []*NodeInfo {
 		ni.Name = v.Name
 		ni.Addr = v.Status.Addresses[0].Address
 		ni.User = userName
+		ni.CPU = v.Status.Capacity.Cpu().Value()
+		ni.Mem = v.Status.Capacity.Memory().Value()
 		nodes = append(nodes, ni)
 	}
 	return nodes

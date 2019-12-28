@@ -18,3 +18,16 @@ func InstallClusterStorageClass(cmd *cobra.Command) error {
 	}
 	return nil
 }
+
+func DelClusterStorageClass(cmd *cobra.Command) error {
+	config, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		glog.Error(err)
+		return err
+	}
+	if err := kubernetes.DelStorageClassHandler(config, ClusterStorageClass); err != nil {
+		glog.Error(err)
+		return err
+	}
+	return nil
+}

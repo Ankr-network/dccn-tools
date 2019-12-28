@@ -30,32 +30,9 @@ const (
 )
 
 func InstallCluster(cmd *cobra.Command) error {
-	config, err := cmd.Flags().GetString("kubeconfig")
-	if err != nil {
-		glog.Error(err)
-		return err
-	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", config)
-	if err != nil {
-		glog.Error(err)
-		return err
-	}
-
-	ciBytes, err := getClusterInstallTpl(ClusterInstall)
-	if err != nil {
-		glog.Error(err)
-		return err
-	}
-	cephCluster := rookApi.CephCluster{}
-	if err := yaml.Unmarshal(ciBytes, &cephCluster); err != nil {
-		glog.Error(err)
-		return err
-	}
-
-	cephV1Client, err := rookv1.NewForConfig(cfg)
-	if err != nil {
-		glog.Error(err)
-		return err
+	config, cephCluster, cephV1Client, e := clusterComm(cmd)
+	if e != nil {
+		return e
 	}
 
 	if _, err := cephV1Client.CephClusters(cephCluster.Namespace).Get(cephCluster.Name, v1.GetOptions{}); err != nil {
@@ -129,6 +106,35 @@ func InstallCluster(cmd *cobra.Command) error {
 	return nil
 }
 
+func clusterComm(cmd *cobra.Command) (string, rookApi.CephCluster, *rookv1.CephV1Client, error) {
+	config, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		glog.Error(err)
+		return "", rookApi.CephCluster{}, nil, err
+	}
+	cfg, err := clientcmd.BuildConfigFromFlags("", config)
+	if err != nil {
+		glog.Error(err)
+		return "", rookApi.CephCluster{}, nil, err
+	}
+	ciBytes, err := getClusterInstallTpl(ClusterInstall)
+	if err != nil {
+		glog.Error(err)
+		return "", rookApi.CephCluster{}, nil, err
+	}
+	cephCluster := rookApi.CephCluster{}
+	if err := yaml.Unmarshal(ciBytes, &cephCluster); err != nil {
+		glog.Error(err)
+		return "", rookApi.CephCluster{}, nil, err
+	}
+	cephV1Client, err := rookv1.NewForConfig(cfg)
+	if err != nil {
+		glog.Error(err)
+		return "", rookApi.CephCluster{}, nil, err
+	}
+	return config, cephCluster, cephV1Client, nil
+}
+
 func getClusterStatus(rs []byte) string {
 	var r string
 	s := bufio.NewScanner(bytes.NewBuffer(rs))
@@ -168,4 +174,35 @@ func getClusterInstallTpl(body string) ([]byte, error) {
 
 	return buf.Bytes(), nil
 
+}
+
+func DeleteCluster(cmd *cobra.Command) error {
+	config, cephCluster, cephV1Client, e := clusterComm(cmd)
+	if e != nil {
+		return e
+	}
+
+	// install cluster tool box , for check ceph cluster health
+	if err := kubernetes.DelDeploymentHandler(config, ClusterToolBox); err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	if _, err := cephV1Client.CephClusters(cephCluster.Namespace).Get(cephCluster.Name, v1.GetOptions{}); err == nil {
+		if err := cephV1Client.CephClusters(cephCluster.Namespace).Delete(cephCluster.Name, &v1.DeleteOptions{}); err != nil {
+			glog.Error(err)
+			return err
+		}
+	}
+	// wait the component end
+	for {
+		if _, err := cephV1Client.CephClusters(cephCluster.Namespace).Get(cephCluster.Name, v1.GetOptions{}); err == nil {
+			time.Sleep(time.Second)
+			continue
+		} else {
+			break
+		}
+	}
+
+	return nil
 }

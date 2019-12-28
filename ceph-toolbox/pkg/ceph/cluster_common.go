@@ -30,7 +30,7 @@ func ConfigClusterCommon(cmd *cobra.Command) error {
 			return err
 		}
 		if handleKey, ok := m[Kind].(string); ok {
-			if err := worker(config, handleKey, v); err != nil {
+			if err := worker(config, handleKey, v, kubernetes.ApiHandler); err != nil {
 				return err
 			}
 		} else {
@@ -40,10 +40,38 @@ func ConfigClusterCommon(cmd *cobra.Command) error {
 	return nil
 }
 
-func worker(config, name, body string) error {
-	if err := kubernetes.ApiHandler[name](config, body); err != nil {
+func worker(config, name, body string, handler map[string]func(config, body string) error) error {
+	if err := handler[name](config, body); err != nil {
 		glog.Error(err)
 		return err
+	}
+	return nil
+}
+
+func DelClusterComm(cmd *cobra.Command) error {
+	config, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	cms := strings.Split(ClusterCommon, SplitString)
+	if len(cms) == 0 {
+		return errors.New("cluster common shouldn't be null")
+	}
+	var m map[string]interface{}
+	for _, v := range cms {
+		if err := yaml.Unmarshal([]byte(v), &m); err != nil {
+			glog.Error(err)
+			return err
+		}
+		if handleKey, ok := m[Kind].(string); ok {
+			if err := worker(config, handleKey, v, kubernetes.DelApiHandler); err != nil {
+				return err
+			}
+		} else {
+			return errors.New("assert kind failed")
+		}
 	}
 	return nil
 }

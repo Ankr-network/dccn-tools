@@ -1,7 +1,6 @@
 package ceph
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/kubernetes"
@@ -16,25 +15,13 @@ import (
 
 func InstallClusterOperator(cmd *cobra.Command) error {
 
-	var m map[string]interface{}
-
-	if err := yaml.Unmarshal([]byte(ClusterOperator), &m); err != nil {
-		glog.Error(err)
-		return err
-	}
-
-	handleKey, ok := m[Kind].(string)
-	if !ok {
-		return errors.New("handle key assert failed")
-	}
-
 	config, err := cmd.Flags().GetString("kubeconfig")
 	if err != nil {
 		glog.Error(err)
 		return err
 	}
 
-	if err := kubernetes.ApiHandler[handleKey](config, ClusterOperator); err != nil {
+	if err := kubernetes.DeploymentHandler(config, ClusterOperator); err != nil {
 		glog.Error(err)
 		return err
 	}
@@ -77,6 +64,20 @@ func waitOperatorToRunning(config, body string) error {
 			}
 		}
 		time.Sleep(time.Second)
+	}
+	return nil
+}
+
+func DeleteClusterOperator(cmd *cobra.Command) error {
+	config, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		glog.Error(err)
+		return err
+	}
+
+	if err := kubernetes.DelDeploymentHandler(config, ClusterOperator); err != nil {
+		glog.Error(err)
+		return err
 	}
 	return nil
 }

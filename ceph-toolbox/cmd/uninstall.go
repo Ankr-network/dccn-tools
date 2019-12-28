@@ -23,17 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "init ceph cluster",
+// uninstallCmd represents the uninstall command
+var uninstallCmd = &cobra.Command{
+	Use:   "uninstall",
+	Short: "uninstall ceph cluster",
 	Long:  ``,
-	Run:   ceph.Run,
+	Run:   ceph.Uninstall,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(uninstallCmd)
 	goflag.Parse()
-	//initCmd.PersistentFlags().StringP("foo", "f", "", "A help for foo")
-
 }
