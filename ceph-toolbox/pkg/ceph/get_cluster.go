@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	Master           = "node-role.kubernetes.io/master"
-	CpuMinimum int64 = 4
-	MemMinimum int64 = 7000 * KB
+	Master            = "node-role.kubernetes.io/master"
+	CpuMinimum  int64 = 4
+	MemMinimum  int64 = 7000 * KB
+	NodeMinimum int   = 3
 )
 
 type NodeInfo struct {

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/ssh"
+	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/ssh/face"
+	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/ssh/impl"
 	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/sys"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -61,14 +62,14 @@ func InitEnv(cmd *cobra.Command) error {
 		return err
 	}
 	for _, v := range ns {
-		if priKey != "" {
-			name = v.Name
-		}
-		c, err := ssh.Dial(v.Addr, name, priKey, password)
+
+		glog.Infof("host: %s user: %s password: ****** private: %s \n", v.Addr, name, priKey)
+		c, err := impl.NewClient(v.Addr, name, password, priKey)
 		if err != nil {
 			glog.Error(err)
 			return err
 		}
+
 		if err = makeValidDirectory(c, DirName); err != nil {
 			glog.Error(err)
 			return err
@@ -78,12 +79,16 @@ func InitEnv(cmd *cobra.Command) error {
 }
 
 func checkEnvCondition(ns []*NodeInfo) error {
+	if len(ns) < NodeMinimum {
+		glog.Infof("basic condition, minimum nodes: %d current nodes: %d \n", NodeMinimum, len(ns))
+		errors.New("kubernetes cluster environment condition can't satisfy with ceph cluster")
+	}
 	// output env info
 	for _, v := range ns {
-		glog.V(2).Infof("ip: %s node: %s user: %s cpu: %d mem: %d \n",
+		glog.Infof("ip: %s node: %s user: %s cpu: %d mem: %d \n",
 			v.Addr, v.Name, v.User, v.CPU, v.Mem)
 		if v.CPU < CpuMinimum || v.Mem < MemMinimum {
-			glog.V(10).Infof("basic condition, minimum cpu cores: %d memory size: %d \n",
+			glog.Infof("basic condition, minimum cpu cores: %d memory size: %d \n",
 				CpuMinimum, MemMinimum)
 			return errors.New("kubernetes cluster environment condition can't satisfy with ceph cluster")
 		}
@@ -91,7 +96,7 @@ func checkEnvCondition(ns []*NodeInfo) error {
 	return nil
 }
 
-func makeValidDirectory(c *ssh.Client, dirName string) error {
+func makeValidDirectory(c face.Issh, dirName string) error {
 	// find out max size store volume and the path which mounted
 	rsp, err := c.Run("df -m")
 	if err != nil {
@@ -111,7 +116,7 @@ func makeValidDirectory(c *ssh.Client, dirName string) error {
 	}
 
 	validPath := fmt.Sprintf("%s/rook/%s", maxPath, dirName)
-	cmd := fmt.Sprintf("mkdir -p %s", validPath)
+	cmd := fmt.Sprintf("sudo mkdir -p %s", validPath)
 
 	// create store directory
 	_, err = c.Run(cmd)
@@ -120,13 +125,13 @@ func makeValidDirectory(c *ssh.Client, dirName string) error {
 	}
 
 	// create new soft link
-	cmd = fmt.Sprintf("mkdir -p %s", RookStorePath)
+	cmd = fmt.Sprintf("sudo mkdir -p %s", RookStorePath)
 	_, err = c.Run(cmd)
 	if err != nil {
 		return err
 	}
 
-	cmd = fmt.Sprintf("ln -s %s %s", validPath, RookStorePath)
+	cmd = fmt.Sprintf("sudo ln -s %s %s", validPath, RookStorePath)
 	_, err = c.Run(cmd)
 	if err != nil {
 		return err

@@ -49,7 +49,7 @@ func init() {
 	// initialize global flags
 	rootCmd.PersistentFlags().StringP("kubeconfig", "c", "/root/.kube/config",
 		"kubernetes cluster config")
-	rootCmd.PersistentFlags().StringP("privateKey", "k", "/root/.ssh/id_rsa.pub",
+	rootCmd.PersistentFlags().StringP("privateKey", "k", "/root/.ssh/id_rsa",
 		"host private key file")
 	rootCmd.PersistentFlags().StringP("user", "u", "root",
 		"user name")
