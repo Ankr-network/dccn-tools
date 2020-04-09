@@ -74,6 +74,8 @@ func (i *DelImage) getSize() float64 {
 		return sizenum / 1024 / 1024
 	case "TB":
 		return sizenum * 1024
+	default:
+		fmt.Printf("未识别到images所占的内存总量：%s   %s\n", reclaimables[3], reclaimables[4])
 	}
 	return 0
 }
