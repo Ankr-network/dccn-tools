@@ -1,6 +1,8 @@
 package funs
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestExec(t *testing.T) {
 	_, err := Exec("ls")
