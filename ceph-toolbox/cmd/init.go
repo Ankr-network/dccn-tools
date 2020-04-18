@@ -17,8 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	goflag "flag"
-
 	"github.com/Ankr-network/dccn-tools/ceph-toolbox/pkg/ceph"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +31,4 @@ var initCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	goflag.Parse()
-	//initCmd.PersistentFlags().StringP("foo", "f", "", "A help for foo")
-
 }
