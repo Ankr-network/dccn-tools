@@ -117,7 +117,7 @@ func makeValidDirectory(c face.Issh, dirName string) error {
 
 	validPath := fmt.Sprintf("%s/rook/%s", maxPath, dirName)
 	cmd := fmt.Sprintf("sudo mkdir -p %s", validPath)
-
+	glog.Info("exec cmd: ", cmd)
 	// create store directory
 	_, err = c.Run(cmd)
 	if err != nil {
@@ -126,12 +126,14 @@ func makeValidDirectory(c face.Issh, dirName string) error {
 
 	// create new soft link
 	cmd = fmt.Sprintf("sudo mkdir -p %s", RookStorePath)
+	glog.Info("exec cmd: ", cmd)
 	_, err = c.Run(cmd)
 	if err != nil {
 		return err
 	}
 
 	cmd = fmt.Sprintf("sudo ln -s %s %s", validPath, RookStorePath)
+	glog.Info("exec cmd: ", cmd)
 	_, err = c.Run(cmd)
 	if err != nil {
 		return err

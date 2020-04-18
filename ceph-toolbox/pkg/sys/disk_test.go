@@ -41,7 +41,7 @@ tmpfs            1618652        36   1618616    1% /run/user/1000`
 
 func TestLookUpValidDisk(t *testing.T) {
 	exp := "/run"
-	act := LookUpValidDisk(diskInfo)
+	act, _ := LookUpValidDisk(diskInfo)
 	if exp != act {
 		t.Errorf("exp: %s act: %s \n", exp, act)
 	}

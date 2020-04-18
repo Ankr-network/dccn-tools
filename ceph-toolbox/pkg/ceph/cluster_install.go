@@ -30,6 +30,7 @@ const (
 )
 
 func InstallCluster(cmd *cobra.Command) error {
+
 	config, cephCluster, cephV1Client, e := clusterComm(cmd)
 	if e != nil {
 		return e
@@ -159,14 +160,10 @@ func getClusterInstallTpl(body string) ([]byte, error) {
 
 	arg := struct {
 		HostDirPath string
-		DbSize      int
-		JournalSize int
 	}{
 		HostDirPath: fmt.Sprintf("%s/%s", RookStorePath, DirName),
-		DbSize:      int(float64(DbMinSizeMB) / 6.0 * 5.0),
-		JournalSize: int(float64(DbMinSizeMB) / 6.0),
 	}
-	glog.Infof("cluster osd storage size: %d MB journal size: %d MB\n", arg.DbSize, arg.JournalSize)
+
 	if err := tpl.Execute(buf, &arg); err != nil {
 		glog.Error(err)
 		return nil, err

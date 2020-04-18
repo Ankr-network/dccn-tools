@@ -45,6 +45,7 @@ func Execute() {
 
 func init() {
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	goflag.Parse()
 
 	// initialize global flags
 	rootCmd.PersistentFlags().StringP("kubeconfig", "c", "/root/.kube/config",

@@ -26,9 +26,7 @@ spec:
     useAllNodes: true
     useAllDevices: false
     deviceFilter:
-    config:
-      databaseSizeMB: "{{ .DbSize }}"  
-      journalSizeMB: "{{ .JournalSize }}"  
+    config: 
       osdsPerDevice: "1" 
     directories:
     - path: {{ .HostDirPath }}`
