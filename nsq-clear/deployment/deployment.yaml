@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsq-clear-deploy
+  namespace: apiservice
+  labels:
+    deploy: nsq-clear-deploy
+spec:
+  replicas: 0
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: nsq-clear-pod
+  template:
+    metadata:
+      labels:
+        app: nsq-clear-pod
+    spec:
+      containers:
+        - name: nsq-clear
+          image: "jinmz/nsq-clear:v0.1.0"
+          imagePullPolicy: IfNotPresent
+          args:
+          - --nsq_admin
+          - "http://nsqadmin.apiservice:4171"
+          - --threshold
+          - "1000000"
+          - --schedule
+          - "5m"
+          - --level
+          - "info"
+
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 56Mi
