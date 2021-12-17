@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: nsq-clear
-          image: "jinmz/nsq-clear:v0.1.0"
+          image: "jinmz/nsq-clear:v0.2.0"
           imagePullPolicy: IfNotPresent
           args:
           - --nsq_admin
@@ -28,7 +28,7 @@ spec:
           - --schedule
           - "5m"
           - --level
-          - "debug"
+          - "info"
 
           resources:
             limits:
