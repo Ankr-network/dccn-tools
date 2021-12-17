@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var topic = "test6"
+var topic = "test4"
 
 func Test_main(t *testing.T) {
 	//go testNSQ("127.0.0.1:4150")
@@ -31,7 +31,7 @@ func producer(addr string) error {
 	}
 	for {
 		producer.Publish(topic, []byte("jmz"))
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 100)
 	}
 
 }
@@ -41,6 +41,7 @@ type NSQHandler struct {
 
 func (this *NSQHandler) HandleMessage(message *nsq.Message) error {
 	log.Println("recv:", string(message.Body))
+	time.Sleep(time.Second * 3)
 	return nil
 }
 

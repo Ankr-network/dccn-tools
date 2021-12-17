@@ -12,17 +12,16 @@ func TestGetTopic(t *testing.T) {
 	assert.NoError(t, err)
 	t.Log(topics)
 	for _, topic := range topics {
-		depth, err := testNsqAdmin.GetTopicDepth(topic)
+		topicInfo, err := testNsqAdmin.GetTopicDepth(topic)
 		assert.NoError(t, err)
-		t.Log(depth)
-		if depth > 100 {
-			err = testNsqAdmin.EmptyQueue(topic)
-			assert.NoError(t, err)
+		t.Log(topic, topicInfo.Depth)
+		for _, v := range topicInfo.Channels {
+			t.Log(v.ChannelName, v.Depth)
 		}
 	}
 }
 
 func TestEmptyQueue(t *testing.T) {
-	err := testNsqAdmin.EmptyQueue("test")
+	err := testNsqAdmin.EmptyQueue("test6", "ch1")
 	assert.NoError(t, err)
 }

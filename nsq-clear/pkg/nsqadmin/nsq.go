@@ -11,7 +11,7 @@ import (
 
 type NsqAdmin interface {
 	GetTopic() ([]string, error)
-	GetTopicDepth(topic string) (uint64, error)
+	GetTopicDepth(topic string) (*TopicInfo, error)
 	EmptyQueue(topic string) error
 }
 
@@ -51,26 +51,33 @@ func (n *nsqAdmin) GetTopic() ([]string, error) {
 	return tp.Topics, nil
 }
 
-func (n *nsqAdmin) GetTopicDepth(topic string) (uint64, error) {
+func (n *nsqAdmin) GetTopicDepth(topic string) (*TopicInfo, error) {
 	resp, err := n.client.Get(fmt.Sprintf(topicsUrl, n.addr, topic))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
+
 	var tp TopicInfo
 	err = json.Unmarshal(body, &tp)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return tp.Depth, nil
+	return &tp, nil
 }
 
-func (n *nsqAdmin) EmptyQueue(topic string) error {
-	resp, err := n.client.Post(fmt.Sprintf(topicsUrl, n.addr, topic), contentType, bytes.NewBufferString(emptyTopicBody))
+func (n *nsqAdmin) EmptyQueue(topic string, channel string) error {
+	var url string
+	if channel == "" {
+		url = fmt.Sprintf(topicsUrl, n.addr, topic)
+	} else {
+		url = fmt.Sprintf(emptyQueueUrl, n.addr, topic, channel)
+	}
+	resp, err := n.client.Post(url, contentType, bytes.NewBufferString(emptyTopicBody))
 	if err != nil {
 		return err
 	}

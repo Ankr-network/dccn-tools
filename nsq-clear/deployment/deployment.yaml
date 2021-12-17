@@ -6,7 +6,7 @@ metadata:
   labels:
     deploy: nsq-clear-deploy
 spec:
-  replicas: 0
+  replicas: 1
   revisionHistoryLimit: 5
   selector:
     matchLabels:
@@ -28,7 +28,7 @@ spec:
           - --schedule
           - "5m"
           - --level
-          - "info"
+          - "debug"
 
           resources:
             limits:
